@@ -1,0 +1,403 @@
+@mixin logo-ratio($width, $height, $xs-width: $width/2, $sm-width: $width, $md-width: $width, $lg-width: $md-width) {
+  $ratio: $height/$width;
+
+  width: $xs-width;
+  height: $xs-width * $ratio;
+
+  $break-points: sm md lg;
+  $widths: $sm-width $md-width $lg-width;
+
+  @each $break-point in $break-points {
+    $i: index($break-points, $break-point);
+    @include mq(#{$break-point}) {
+      width: nth($widths, $i);
+      height: nth($widths, $i) * $ratio;
+    }
+  }
+}
+
+@mixin int_check($value) {
+  @if type-of($value) != number {
+    @error "Sorry, but `#{$value}` is not a valid value. Use integer";
+  }
+}
+
+@mixin mq-spacing ($until-xs: 1, $xs: $until-xs, $sm: 2, $md: 3, $lg: $md, $space: $grid-gutter-width) {
+  padding-left: $space/2;
+  padding-right: $space/2;
+
+  @include mq($until: xs) {
+    width: percentage(1/1);
+    &:not(:nth-child(-n + #{1})) {
+      margin-top: $space;
+    }
+  }
+  @include mq(xs , sm) {
+    @include int_check($xs);
+    &:not(:nth-child(-n + #{$xs})) {
+      margin-top: $space;
+    }
+    width: percentage(1/$xs);
+  }
+  @include mq(sm, md) {
+    @include int_check($sm);
+    &:not(:nth-child(-n + #{$sm})) {
+      margin-top: $space;
+    }
+    width: percentage(1/$sm);
+  }
+  @include mq(md, lg) {
+    @include int_check($md);
+    &:not(:nth-child(-n + #{$md})) {
+      margin-top: $space;
+    }
+    width: percentage(1/$md);
+  }
+  @include mq(lg) {
+    @include int_check($lg);
+    &:not(:nth-child(-n + #{$lg})) {
+      margin-top: $space;
+    }
+    width: percentage(1/$lg);
+  }
+}
+
+@mixin underline($color: currentColor, $height: 1px) {
+  position: relative;
+  &:after {
+    content: '';
+    width: 0;
+    height: $height;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background-color: $color;
+    transition: 0.3s ease all;
+  }
+  &:hover {
+    &:after {
+      width: 100%;
+    }
+  }
+}
+@mixin underline-static($color: currentColor, $height: 1px) {
+  position: relative;
+  &:after {
+    content: '';
+    width: 100%;
+    height: $height;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background-color: $color;
+    transition: 0.3s ease all;
+  }
+}
+
+@mixin padding($top: 10rem, $bottom: $top , $sm: 2, $xs: 3) {
+  padding-top: $top / $xs;
+  padding-bottom: $bottom / $xs;
+
+  @include mq(xs) {
+    padding-top: $top / $sm;
+    padding-bottom: $bottom / $sm;
+  }
+  @include mq(sm) {
+    padding-top: $top;
+    padding-bottom: $bottom;
+  }
+}
+
+@mixin margin($top: 10rem, $bottom: $top , $sm: 2, $xs: 3) {
+  margin-top: $top / $xs;
+  margin-bottom: $bottom / $xs;
+
+  @include mq(xs) {
+    margin-top: $top / $sm;
+    margin-bottom: $bottom / $sm;
+  }
+  @include mq(sm) {
+    margin-top: $top;
+    margin-bottom: $bottom;
+  }
+}
+
+@mixin button-bg($bg) {
+  background: $bg;
+  transition: all 0.3s ease;
+  &:hover {
+    background: darken($bg, 8%);
+  }
+  &:active {
+    background: darken($bg, 12%);
+  }
+}
+
+@mixin mq-margin($top: 3rem, $mq: sm) {
+  @include mq($until: $mq) {
+    &:not(:first-child) {
+      margin-top: $top;
+    }
+  }
+}
+@mixin mq-padding($bottom: 3rem, $mq: sm) {
+  @include mq($until: $mq) {
+    padding-top: $bottom/2;
+    padding-bottom: $bottom/2;
+    &:first-of-type {
+      padding-top: $bottom;
+    }
+    &:last-of-type {
+      padding-bottom: $bottom;
+    }
+  }
+}
+
+/**
+     * Computes a top-shadow for a card effect.
+     *
+     * @param {Number} $depth - depth level
+     *
+     * @return {List}
+     */
+@function top-shadow($depth) {
+  $primary-offset: nth(1.5 3 10 14 19, $depth) * 1px;
+  $blur: nth(1.5 3 10 14 19, $depth) * 4px;
+  $color: rgba(black, nth(0.12 0.16 0.19 0.25 0.3, $depth));
+
+  @return 0 $primary-offset $blur $color;
+}
+
+/**
+     * Computes a bottom-shadow for a card effect.
+     *
+     * @param {Number} $depth - depth level
+     *
+     * @return {List}
+     */
+@function bottom-shadow($depth) {
+  $primary-offset: nth(1.5 3 6 10 15, $depth) * 1px;
+  $blur: nth(1 3 3 5 6, $depth) * 4px;
+  $color: rgba(black, nth(0.24 0.23 0.23 0.22 0.22, $depth));
+
+  @return 0 $primary-offset $blur $color;
+}
+
+/**
+     * Gives a card depth effect.
+     *
+     * @param {Number} $depth - depth level (between 1 and 5)
+     *
+     * @link http://www.google.com/design/spec/layout/layout-principles.html#layout-principles-dimensionality Google Design
+     *
+     * @requires {function} top-shadow
+     * @requires {function} bottom-shadow
+     */
+@mixin card($depth) {
+  @if $depth < 1 {
+    box-shadow: none;
+  } @else if $depth > 5 {
+    @warn "Invalid $depth `#{$depth}` for mixin `card`.";
+  } @else {
+    box-shadow: bottom-shadow($depth), top-shadow($depth);
+    transform: translateY(nth(-0.1rem -0.2rem -0.3rem -0.4rem -0.5rem, $depth));
+  }
+}
+// -----------------------------------------------------------------------------
+// Quantity queries
+// -----------------------------------------------------------------------------
+// Table of contents:
+// 1. Last Simple Selector
+// 2. Build Quantity Selector
+// 3. At least
+// 4. At most
+// 5. Between
+// 6. Exactly
+
+// -----------------------------------------------------------------------------
+// 1. Last Simple Selector
+// -----------------------------------------------------------------------------
+
+/// Find the last simple selector in a given selector
+/// @access private
+/// @param  {list | string} $selector - A single selector
+/// @return {string}                  - The last simple selector in $selector
+/// @example scss
+///   $result: _last-simple-selector(ul > li); // li
+
+@function _last-simple-selector($selector) {
+  $parsed: selector-parse($selector);
+
+  @if length($parsed) > 1 {
+    @error '`#{$selector}` contains #{length($parsed)} selectors and the `_last-simple-selector() `function accepts only 1';
+  }
+  $last-simple-selector: nth(nth($parsed, 1), -1);
+
+  @return $last-simple-selector;
+}
+
+// -----------------------------------------------------------------------------
+// 2. Build Quantity Selector
+// -----------------------------------------------------------------------------
+
+/// Builds the selector for the quantity query
+/// @access private
+/// @param  {string} $selector-append      - The selector to be appended
+/// @param  {string} $last-selector        - The item's selector
+/// @return {list}                         - The final quantity query selector
+
+@function _build-quantity-selector($selector-append, $last-selector) {
+  $quantity-selector: ();
+
+  @each $s in & {
+    $last-simple-selector: '~' +
+      if($last-selector, $last-selector, _last-simple-selector($s));
+    $sel: selector-append($s, $selector-append);
+    $sel2: selector-nest($sel, $last-simple-selector);
+    $quantity-selector: append($quantity-selector, $sel, 'comma');
+    $quantity-selector: append($quantity-selector, $sel2, 'comma');
+  }
+
+  @return $quantity-selector;
+}
+
+// -----------------------------------------------------------------------------
+// 3. At least
+// -----------------------------------------------------------------------------
+
+/// Query when total items is at least N items
+/// @param  {number} $count - Quantity to match (equal or more)
+/// @example scss - Make the items color red when there are 4 items or more
+///   ul li {
+///     @include at-least(4) { color: red; }
+///   }
+/// @example scss - Make the items color blue when there are 6 items or more and use '*' (element agnostic) as the item selector
+///   ul li {
+///     @include at-least(6, '*') { color: blue; }
+///   }
+
+@mixin at-least($count, $selector: null) {
+  $selector-append: ':nth-last-child(n+#{$count})';
+
+  @if type-of($count) != 'number' or not unitless($count) or $count < 1 {
+    @error '`#{$count}` is not a valid number for `at-least`';
+  }
+
+  @if $selector != null and (type-of($selector) != 'string' or length($selector) > 1) {
+    @error '`#{$selector}` is not a valid selector for `at-least`';
+  }
+
+  $at-least-selector: _build-quantity-selector($selector-append, $selector);
+
+  @at-root #{$at-least-selector} {
+    @content;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 4. At most
+// -----------------------------------------------------------------------------
+
+/// Query when total items is at most N items
+/// @param  {number} $count - Quantity to match (equal or less)
+/// @example scss - Make the items color red when there are 4 items or less
+///   ul li {
+///     @include at-most(4) { color: red; }
+///   }
+/// @example scss - Make the items color blue when there are 6 items or less and use '*' (element agnostic) as the item selector
+///   ul li {
+///     @include at-most(6, '*') { color: blue; }
+///   }
+
+@mixin at-most($count, $selector: null) {
+  $selector-append: ':nth-last-child(-n+#{$count}):first-child';
+
+  @if type-of($count) != 'number' or not unitless($count) or $count < 1 {
+    @error '`#{$count}` is not a valid number for `at-most`.';
+  }
+
+  @if $selector != null and (type-of($selector) != 'string' or length($selector) > 1) {
+    @error '`#{$selector}` is not a valid selector for `at-most`';
+  }
+
+  $at-most-selector: _build-quantity-selector($selector-append, $selector);
+
+  @at-root #{$at-most-selector} {
+    @content;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 5. Between
+// -----------------------------------------------------------------------------
+
+/// Query when total items is at least X items and at most Y items
+/// @param  {number} $at-least - Lower quantity of items to match
+/// @param  {number} $at-most - Higher quantity of items to match
+/// @example scss - Make the items color red when there are at least 2 and at most 4 items
+///   ul li {
+///     @include between(4, 8) { color: red; }
+///   }
+/// @example scss - Make the items color blue when there are at least 6 items and at most 10 items and use '*' (element agnostic) as the item selector
+///   ul li {
+///     @include between(6, 10, '*') { color: blue; }
+///   }
+
+@mixin between($first, $last, $selector: null) {
+  $selector-append: ':nth-last-child(n+#{$first}):nth-last-child(-n+#{$last}):first-child';
+
+  @if type-of($first) != 'number' or not unitless($first) or $first < 1 {
+    @error '`#{$first}` is not a valid number for `between`';
+  }
+
+  @if type-of($last) != 'number' or not unitless($last) or $last < 1 {
+    @error '`#{$last}` is not a valid number for `between`';
+  }
+
+  @if $first > $last {
+    @error '#{$first} can´t be larger that #{$last} for `between`';
+  }
+
+  @if $selector != null and (type-of($selector) != 'string' or length($selector) > 1) {
+    @error '`#{$selector}` is not a valid selector for `between`';
+  }
+
+  $between-selector: _build-quantity-selector($selector-append, $selector);
+
+  @at-root #{$between-selector} {
+    @content;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 6. Exactly
+// -----------------------------------------------------------------------------
+
+/// Query when total items is exactly N items
+/// @param  {number} $count - Quantity to match (equal)
+/// @example scss - Make the items color red when there are exactly 4 items
+///   ul li {
+///     @include exactly(4) { color: red; }
+///   }
+/// @example scss - Make the items color blue when there are exactly 6 items and use '*' (element agnostic) as the item selector
+///   ul li {
+///     @include exactly(6, '*') { color: blue; }
+///   }
+
+@mixin exactly($count, $selector: null) {
+  $selector-append: ':nth-last-child(#{$count}):first-child';
+
+  @if type-of($count) != 'number' or not unitless($count) or $count < 1 {
+    @error '`#{$count}` is not a valid number for `exactly`';
+  }
+
+  @if $selector != null and (type-of($selector) != 'string' or length($selector) > 1) {
+    @error '`#{$selector}` is not a valid selector for `exactly`';
+  }
+
+  $exactly-selector: _build-quantity-selector($selector-append, $selector);
+
+  @at-root #{$exactly-selector} {
+    @content;
+  }
+}
